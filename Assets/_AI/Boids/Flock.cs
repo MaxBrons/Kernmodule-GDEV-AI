@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Flock : MonoBehaviour
@@ -16,13 +17,13 @@ public class Flock : MonoBehaviour
     [SerializeField, Min(0)] private float _seperationRange = 8f;
 
     [Tooltip("Factor controlling avoidance behavior.")]
-    [SerializeField, Range(1, 100)] private float _seperationFactor = 5f;
+    [SerializeField, Min(1)] private float _seperationFactor = 5f;
 
     [Tooltip("Factor controlling matching velocity with neighboring boids.")]
-    [SerializeField, Range(1, 100)] private float _alignmentFactor = 5f;
+    [SerializeField, Min(1)] private float _alignmentFactor = 5f;
 
     [Tooltip("Factor controlling how much the boids move towards the center of the flock.")]
-    [SerializeField, Range(1, 100)] private float _cohesionFactor = 5f;
+    [SerializeField, Min(1)] private float _cohesionFactor = 5f;
 
     [Header("Bounds")]
     [Tooltip("Factor controlling how quickly boids return to within the bounds.")]
@@ -47,7 +48,6 @@ public class Flock : MonoBehaviour
         InitializeBoids();
     }
 
-    // Called every frame
     private void Update()
     {
         // Update the behavior of the flock.
@@ -88,14 +88,16 @@ public class Flock : MonoBehaviour
     // Update the position and velocity of each boid based on avoidance, cohesion, and alignment behaviors.
     private void UpdateBoids()
     {
-        var seperation = _seperationFactor / 100;
-        var allignment = _alignmentFactor / 500;
-        var cohesion = _cohesionFactor / 100;
-        var turnSpeed = _turnFactor / 10;
+        float separation = _seperationFactor / 1000.0f;
+        float alignment = _alignmentFactor / 1000.0f;
+        float cohesion = _cohesionFactor / 10000.0f;
+        float turnSpeed = _turnFactor / 100.0f;
+        Vector2 speedLimit = new(_minSpeed / 100, _maxSpeed / 100);
 
         foreach (var boid in _boids) {
-            // Initialize the variables for calculating the averages and close distances.
-            float xpos_avg = 0, ypos_avg = 0, zpos_avg = 0, xvel_avg = 0, yvel_avg = 0, zvel_avg = 0, close_dx = 0, close_dy = 0, close_dz = 0;
+            Vector3 posAvg = Vector3.zero;
+            Vector3 velAvg = Vector3.zero;
+            Vector3 closeDelta = Vector3.zero;
 
             // Iterate through all the boids to calculate the averages and close distances.
             foreach (var otherboid in _boids) {
@@ -105,81 +107,51 @@ public class Flock : MonoBehaviour
                     continue;
 
                 // Calculate the relative positions and distances.
-                float dx = boid.transform.position.x - otherboid.transform.position.x;
-                float dy = boid.transform.position.y - otherboid.transform.position.y;
-                float dz = boid.transform.position.z - otherboid.transform.position.z;
+                Vector3 relativePositions = boid.transform.position - otherboid.transform.position;
 
-                float squared_distance = dx * dx + dy * dy + dz * dz;
+                float squared_distance = relativePositions.sqrMagnitude;
 
                 // Check if the other boid is within the avoidance range.
                 // If so, steer away from the other boid.
-                if (squared_distance < _seperationRange) {
-                    close_dx += boid.transform.position.x - otherboid.transform.position.x;
-                    close_dy += boid.transform.position.y - otherboid.transform.position.y;
-                    close_dz += boid.transform.position.z - otherboid.transform.position.z;
+                if (squared_distance < _seperationRange * _seperationRange) {
+                    closeDelta += boid.transform.position - otherboid.transform.position;
                 }
 
                 // Add up all the position and velcoty values
                 // of the other boids.
-                xpos_avg += otherboid.transform.position.x;
-                ypos_avg += otherboid.transform.position.y;
-                zpos_avg += otherboid.transform.position.z;
-                xvel_avg += otherboid.velocity.x;
-                yvel_avg += otherboid.velocity.y;
-                zvel_avg += otherboid.velocity.z;
+                posAvg += otherboid.transform.position;
+                velAvg += otherboid.velocity;
             }
             // Calculate the average position and velocity.
-            xpos_avg /= _boids.Count;
-            ypos_avg /= _boids.Count;
-            zpos_avg /= _boids.Count;
-            xvel_avg /= _boids.Count;
-            yvel_avg /= _boids.Count;
-            zvel_avg /= _boids.Count;
+            posAvg /= _boids.Count;
+            velAvg /= _boids.Count;
 
             // Update the boid's velocity based on avoidance, cohesion, and alignment behaviors.
-            boid.velocity.x = (boid.velocity.x +
-                       (xpos_avg - boid.transform.position.x) * cohesion +
-                       (xvel_avg - boid.velocity.x) * allignment) +
-                       (close_dx * seperation) * Time.deltaTime;
+            boid.velocity = boid.velocity +
+                            (posAvg - boid.transform.position) * cohesion +
+                            (velAvg - boid.velocity) * alignment +
+                            (closeDelta * separation) *
+                            Time.deltaTime;
 
-            boid.velocity.y = (boid.velocity.y +
-                       (ypos_avg - boid.transform.position.y) * cohesion +
-                       (yvel_avg - boid.velocity.y) * allignment) +
-                       (close_dy * seperation) * Time.deltaTime;
-
-            boid.velocity.z = (boid.velocity.z +
-                       (zpos_avg - boid.transform.position.z) * cohesion +
-                       (zvel_avg - boid.velocity.z) * allignment) +
-                       (close_dz * seperation) * Time.deltaTime;
-
+            Vector3 offsets = _bounds / 2;
 
             // Resteer the boid back if it leaves the boundries.
-            if (boid.transform.position.x > (transform.position.x + _bounds.x / 2))
+            if (boid.transform.position.x > (transform.position.x + offsets.x))
                 boid.velocity.x -= turnSpeed * Time.deltaTime;
-            if (boid.transform.position.x < (transform.position.x - _bounds.x / 2))
+            if (boid.transform.position.x < (transform.position.x - offsets.x))
                 boid.velocity.x += turnSpeed * Time.deltaTime;
-            if (boid.transform.position.y > (transform.position.y + _bounds.y / 2))
+            if (boid.transform.position.y > (transform.position.y + offsets.y))
                 boid.velocity.y -= turnSpeed * Time.deltaTime;
-            if (boid.transform.position.y < (transform.position.y - _bounds.y / 2))
+            if (boid.transform.position.y < (transform.position.y - offsets.y))
                 boid.velocity.y += turnSpeed * Time.deltaTime;
-            if (boid.transform.position.z > (transform.position.z + _bounds.z / 2))
+            if (boid.transform.position.z > (transform.position.z + offsets.z))
                 boid.velocity.z -= turnSpeed * Time.deltaTime;
-            if (boid.transform.position.z < (transform.position.z - _bounds.z / 2))
+            if (boid.transform.position.z < (transform.position.z - offsets.z))
                 boid.velocity.z += turnSpeed * Time.deltaTime;
 
-            // Limit boid speed within defined limits.
-            float speed = boid.velocity.sqrMagnitude;
-
-            if (speed < _minSpeed * _minSpeed) {
-                boid.velocity.x = (boid.velocity.x / speed) * _minSpeed;
-                boid.velocity.y = (boid.velocity.y / speed) * _minSpeed;
-                boid.velocity.z = (boid.velocity.z / speed) * _minSpeed;
-            }
-            if (speed > _maxSpeed * _maxSpeed) {
-                boid.velocity.x = (boid.velocity.x / speed) * _maxSpeed;
-                boid.velocity.y = (boid.velocity.y / speed) * _maxSpeed;
-                boid.velocity.z = (boid.velocity.z / speed) * _maxSpeed;
-            }
+            // Limit the boid's speed within defined limits.
+            float speed = boid.velocity.magnitude;
+            boid.velocity = boid.velocity.normalized * Mathf.Clamp(speed, speedLimit.x, speedLimit.y);
 
             // Update boid position based on its velocity
             boid.transform.position += boid.velocity;
