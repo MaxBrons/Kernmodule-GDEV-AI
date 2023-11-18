@@ -1,7 +1,6 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
 public class Boid : MonoBehaviour
 {
-
+    public Vector3 velocity;
 }
