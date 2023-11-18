@@ -354,7 +354,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _boidPrefab: {fileID: 5762457667900351725, guid: acde9e1b1a5f08a4f9e057ca289ad1de, type: 3}
-  _boidsPerAxisRow: 5
+  _boidsAmount: 100
   _avoidanceRange: 8
   _avoidFactor: 0.05
   _matchingFactor: 0.05

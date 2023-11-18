@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Flock : MonoBehaviour
@@ -7,7 +8,7 @@ public class Flock : MonoBehaviour
     [SerializeField] private GameObject _boidPrefab;
 
     [Tooltip("Number of boids along each axis in a cubic grid.")]
-    [SerializeField] private int _boidsPerAxisRow = 5;
+    [SerializeField] private int _boidsAmount = 5;
 
     [Tooltip("Distance at which the boids start avoiding each other.")]
     [SerializeField] private float _avoidanceRange = 8f;
@@ -56,21 +57,20 @@ public class Flock : MonoBehaviour
         if (!_boidPrefab)
             return;
 
-        // Calculate the initial positions for the boids in a cubic grid.
-        Vector3 leftBackBottomCorner = transform.position - new Vector3(_bounds.x / 2, _bounds.y / 2, _bounds.z / 2);
-        float offsetX = (_bounds.x - (_bounds.x * 0.2f)) / _boidsPerAxisRow;
-        float offsetY = (_bounds.y - (_bounds.y * 0.2f)) / _boidsPerAxisRow;
-        float offsetZ = (_bounds.z - (_bounds.z * 0.2f)) / _boidsPerAxisRow;
-        float margin = (_bounds.x * 0.1f);
+        // Get the corner of the cube to draw the spheres in a grid from that point.
+        Vector3 leftBackBottomCorner = transform.position - _bounds / 2;
 
-        // Instantiate the boids in the calculated positions.
-        for (int z = 0; z < _boidsPerAxisRow; z++) {
-            for (int y = 0; y < _boidsPerAxisRow; y++) {
-                for (int x = 0; x < _boidsPerAxisRow; x++) {
-                    var obj = Instantiate(_boidPrefab, leftBackBottomCorner + (2 * margin * Vector3.one) + new Vector3(x * offsetX, y * offsetY, z * offsetZ), Quaternion.identity);
-                    _boids.Add(obj.GetComponent<Boid>());
-                }
-            }
+        int amountPerRow = (int)Math.Ceiling(Math.Pow(_boidsAmount, 1.0 / 3.0));
+        Vector3 offset = _bounds / amountPerRow;
+
+        // Instantiate all the boids in a grid, seperated and centered.
+        for (int i = 0; i < _boidsAmount; i++) {
+            int x = i % amountPerRow;
+            int y = (i / amountPerRow) % amountPerRow;
+            int z = i / (amountPerRow * amountPerRow);
+
+            var obj = Instantiate(_boidPrefab, leftBackBottomCorner + offset / 2 + Vector3.Scale(offset, new Vector3(x, z, y)), Quaternion.identity);
+            _boids.Add(obj.GetComponent<Boid>());
         }
     }
 
@@ -92,7 +92,7 @@ public class Flock : MonoBehaviour
             // Iterate through all the boids to calculate the averages and close distances.
             foreach (var otherboid in _boids) {
 
-                // No reason to calculate agains itself.
+                // No reason to calculate against itself.
                 if (boid == otherboid)
                     continue;
 
@@ -193,24 +193,18 @@ public class Flock : MonoBehaviour
 
         // Get the corner of the cube to draw the spheres in a grid from that point.
         Vector3 leftBackBottomCorner = transform.position - _bounds / 2;
-
-        // Limit the amount of spheres there are displayed on the screen, because
-        // the editor can't handle so many calls.
-        int amountToSpawnPerRow = Mathf.Min(10, _boidsPerAxisRow);
-
-        float margin = (_bounds.x * 0.1f);
-        float offsetX = (_bounds.x - (margin * 2)) / amountToSpawnPerRow;
-        float offsetY = (_bounds.y - (margin * 2)) / amountToSpawnPerRow;
-        float offsetZ = (_bounds.z - (margin * 2)) / amountToSpawnPerRow;
+        
+        int amountPerRow = (int)Math.Ceiling(Math.Pow(_boidsAmount, 1.0 / 3.0));
+        Vector3 offset = _bounds / amountPerRow;
 
         // Draw a grid of spheres that represent the spawn location of the instantiated boids.
-        for (int z = 0; z < amountToSpawnPerRow; z++) {
-            for (int y = 0; y < amountToSpawnPerRow; y++) {
-                for (int x = 0; x < amountToSpawnPerRow; x++) {
-                    Gizmos.color = (x * y * z) < 9 * 9 * 9 ? Color.yellow : Color.grey;
-                    Gizmos.DrawWireSphere(leftBackBottomCorner + (1.5f * margin * Vector3.one) + new Vector3(x * offsetX, y * offsetY, z * offsetZ), 1);
-                }
-            }
+        for (int i = 0; i < _boidsAmount; i++) {
+            int x = i % amountPerRow;
+            int y = (i / amountPerRow) % amountPerRow;
+            int z = i / (amountPerRow * amountPerRow);
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(leftBackBottomCorner + offset/2 + Vector3.Scale(offset, new Vector3(x, z, y)), 1);
         }
     }
 }
