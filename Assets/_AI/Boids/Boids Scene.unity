@@ -355,12 +355,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _boidPrefab: {fileID: 5762457667900351725, guid: acde9e1b1a5f08a4f9e057ca289ad1de, type: 3}
   _boidsAmount: 100
-  _avoidanceRange: 8
-  _avoidFactor: 0.05
-  _matchingFactor: 0.05
-  _turnFactor: 10
-  _centeringFactor: 0.01
-  _maxSpeed: 2
+  _seperationRange: 8
+  _seperationFactor: 50
+  _alignmentFactor: 35
+  _cohesionFactor: 1
+  _turnFactor: 30
+  _maxSpeed: 1.1
   _minSpeed: 1
   _bounds: {x: 50, y: 50, z: 50}
 --- !u!1660057539 &9223372036854775807

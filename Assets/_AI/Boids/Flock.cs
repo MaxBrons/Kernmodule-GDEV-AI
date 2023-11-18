@@ -4,38 +4,41 @@ using UnityEngine;
 
 public class Flock : MonoBehaviour
 {
+    [Header("Flock Settings")]
     [Tooltip("Prefab for the individual boids.")]
-    [SerializeField] private GameObject _boidPrefab;
+    [SerializeField] private GameObject _boidPrefab = null;
 
     [Tooltip("Number of boids along each axis in a cubic grid.")]
-    [SerializeField] private int _boidsAmount = 5;
+    [SerializeField, Min(0)] private int _boidsAmount = 5;
 
+    [Header("Flock Rules")]
     [Tooltip("Distance at which the boids start avoiding each other.")]
-    [SerializeField] private float _avoidanceRange = 8f;
+    [SerializeField, Min(0)] private float _seperationRange = 8f;
 
     [Tooltip("Factor controlling avoidance behavior.")]
-    [SerializeField] private float _avoidFactor = 0.5f;
+    [SerializeField, Range(1, 100)] private float _seperationFactor = 5f;
 
     [Tooltip("Factor controlling matching velocity with neighboring boids.")]
-    [SerializeField] private float _matchingFactor = 0.5f;
-
-    [Tooltip("Factor controlling how quickly boids return to within the bounds.")]
-    [SerializeField] private float _turnFactor = 10.0f;
+    [SerializeField, Range(1, 100)] private float _alignmentFactor = 5f;
 
     [Tooltip("Factor controlling how much the boids move towards the center of the flock.")]
-    [SerializeField] private float _centeringFactor = 0.005f;
+    [SerializeField, Range(1, 100)] private float _cohesionFactor = 5f;
+
+    [Header("Bounds")]
+    [Tooltip("Factor controlling how quickly boids return to within the bounds.")]
+    [SerializeField, Min(1)] private float _turnFactor = 1.0f;
 
     [Tooltip("Maximum speed limit for the boids.")]
-    [SerializeField] private float _maxSpeed = 10;
+    [SerializeField, Min(1)] private float _maxSpeed = 20;
 
     [Tooltip("Minimum speed limit for the boids.")]
-    [SerializeField] private float _minSpeed = 5;
+    [SerializeField, Min(1)] private float _minSpeed = 10;
 
     [Tooltip("Dimensions of the cubic bounding box for the flock.")]
-    [SerializeField] private Vector3 _bounds = new Vector3(10, 10, 10);
+    [SerializeField, Min(1)] private Vector3 _bounds = new(10, 10, 10);
 
     // List of boids in the flock.
-    private List<Boid> _boids = new();
+    private readonly List<Boid> _boids = new();
 
     private void Start()
     {
@@ -85,6 +88,11 @@ public class Flock : MonoBehaviour
     // Update the position and velocity of each boid based on avoidance, cohesion, and alignment behaviors.
     private void UpdateBoids()
     {
+        var seperation = _seperationFactor / 100;
+        var allignment = _alignmentFactor / 500;
+        var cohesion = _cohesionFactor / 100;
+        var turnSpeed = _turnFactor / 10;
+
         foreach (var boid in _boids) {
             // Initialize the variables for calculating the averages and close distances.
             float xpos_avg = 0, ypos_avg = 0, zpos_avg = 0, xvel_avg = 0, yvel_avg = 0, zvel_avg = 0, close_dx = 0, close_dy = 0, close_dz = 0;
@@ -105,7 +113,7 @@ public class Flock : MonoBehaviour
 
                 // Check if the other boid is within the avoidance range.
                 // If so, steer away from the other boid.
-                if (squared_distance < _avoidanceRange) {
+                if (squared_distance < _seperationRange) {
                     close_dx += boid.transform.position.x - otherboid.transform.position.x;
                     close_dy += boid.transform.position.y - otherboid.transform.position.y;
                     close_dz += boid.transform.position.z - otherboid.transform.position.z;
@@ -130,34 +138,34 @@ public class Flock : MonoBehaviour
 
             // Update the boid's velocity based on avoidance, cohesion, and alignment behaviors.
             boid.velocity.x = (boid.velocity.x +
-                       (xpos_avg - boid.transform.position.x) * _centeringFactor +
-                       (xvel_avg - boid.velocity.x) * _matchingFactor) +
-                       (close_dx * _avoidFactor) * Time.deltaTime;
+                       (xpos_avg - boid.transform.position.x) * cohesion +
+                       (xvel_avg - boid.velocity.x) * allignment) +
+                       (close_dx * seperation) * Time.deltaTime;
 
             boid.velocity.y = (boid.velocity.y +
-                       (ypos_avg - boid.transform.position.y) * _centeringFactor +
-                       (yvel_avg - boid.velocity.y) * _matchingFactor) +
-                       (close_dy * _avoidFactor) * Time.deltaTime;
+                       (ypos_avg - boid.transform.position.y) * cohesion +
+                       (yvel_avg - boid.velocity.y) * allignment) +
+                       (close_dy * seperation) * Time.deltaTime;
 
             boid.velocity.z = (boid.velocity.z +
-                       (zpos_avg - boid.transform.position.z) * _centeringFactor +
-                       (zvel_avg - boid.velocity.z) * _matchingFactor) +
-                       (close_dz * _avoidFactor) * Time.deltaTime;
+                       (zpos_avg - boid.transform.position.z) * cohesion +
+                       (zvel_avg - boid.velocity.z) * allignment) +
+                       (close_dz * seperation) * Time.deltaTime;
 
 
             // Resteer the boid back if it leaves the boundries.
             if (boid.transform.position.x > (transform.position.x + _bounds.x / 2))
-                boid.velocity.x -= _turnFactor * Time.deltaTime;
+                boid.velocity.x -= turnSpeed * Time.deltaTime;
             if (boid.transform.position.x < (transform.position.x - _bounds.x / 2))
-                boid.velocity.x += _turnFactor * Time.deltaTime;
+                boid.velocity.x += turnSpeed * Time.deltaTime;
             if (boid.transform.position.y > (transform.position.y + _bounds.y / 2))
-                boid.velocity.y -= _turnFactor * Time.deltaTime;
+                boid.velocity.y -= turnSpeed * Time.deltaTime;
             if (boid.transform.position.y < (transform.position.y - _bounds.y / 2))
-                boid.velocity.y += _turnFactor * Time.deltaTime;
+                boid.velocity.y += turnSpeed * Time.deltaTime;
             if (boid.transform.position.z > (transform.position.z + _bounds.z / 2))
-                boid.velocity.z -= _turnFactor * Time.deltaTime;
+                boid.velocity.z -= turnSpeed * Time.deltaTime;
             if (boid.transform.position.z < (transform.position.z - _bounds.z / 2))
-                boid.velocity.z += _turnFactor * Time.deltaTime;
+                boid.velocity.z += turnSpeed * Time.deltaTime;
 
             // Limit boid speed within defined limits.
             float speed = boid.velocity.sqrMagnitude;
@@ -193,7 +201,7 @@ public class Flock : MonoBehaviour
 
         // Get the corner of the cube to draw the spheres in a grid from that point.
         Vector3 leftBackBottomCorner = transform.position - _bounds / 2;
-        
+
         int amountPerRow = (int)Math.Ceiling(Math.Pow(_boidsAmount, 1.0 / 3.0));
         Vector3 offset = _bounds / amountPerRow;
 
@@ -204,7 +212,7 @@ public class Flock : MonoBehaviour
             int z = i / (amountPerRow * amountPerRow);
 
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(leftBackBottomCorner + offset/2 + Vector3.Scale(offset, new Vector3(x, z, y)), 1);
+            Gizmos.DrawWireSphere(leftBackBottomCorner + offset / 2 + Vector3.Scale(offset, new Vector3(x, z, y)), 1);
         }
     }
 }
