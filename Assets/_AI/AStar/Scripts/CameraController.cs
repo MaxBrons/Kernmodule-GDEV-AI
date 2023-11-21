@@ -9,24 +9,27 @@ public class CameraController : MonoBehaviour
     public float zoomSpeed = 2;
     public float lerpSpeed = 1;
     private Vector3 targetPos;
-    // Start is called before the first frame update
+
+    private const string HORIZONTAL_MOVEMENT_AXIS_NAME = "Horizontal";
+    private const string VERTICAL_MOVEMENT_AXIS_NAME = "Vertical";
+    private const string SCROLL_AXIS_NAME = "Mouse ScrollWheel";
+
     void Start()
     {
         targetPos = new Vector3(0, yPos, 0);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        float vert = Input.GetAxis("Vertical");
-        float hor = Input.GetAxis("Horizontal");
+        float vert = Input.GetAxis(VERTICAL_MOVEMENT_AXIS_NAME);
+        float hor = Input.GetAxis(HORIZONTAL_MOVEMENT_AXIS_NAME);
 
         if(vert != 0 || hor != 0)
         {
             targetPos += (Vector3.forward * vert + hor * Vector3.right).normalized * moveSpeed;
         }
 
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        float scroll = Input.GetAxis(SCROLL_AXIS_NAME);
         if(scroll != 0)
         {
             yPos += -Mathf.Sign(scroll) * zoomSpeed;
