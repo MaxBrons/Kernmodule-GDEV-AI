@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 [System.Serializable]
 public class Cell
@@ -25,18 +25,15 @@ public class Cell
     {
         return (walls & wallDirection) != 0;
     }
-    
+
     public List<Cell> GetNeighbours(Cell[,] grid)
     {
         List<Cell> result = new List<Cell>();
-        for (int x = -1; x < 2; x++)
-        {
-            for (int y = -1; y < 2; y++)
-            {
+        for (int x = -1; x < 2; x++) {
+            for (int y = -1; y < 2; y++) {
                 int cellX = this.gridPosition.x + x;
                 int cellY = this.gridPosition.y + y;
-                if (cellX < 0 || cellX >= grid.GetLength(0) || cellY < 0 || cellY >= grid.GetLength(1) || Mathf.Abs(x) == Mathf.Abs(y))
-                {
+                if (cellX < 0 || cellX >= grid.GetLength(0) || cellY < 0 || cellY >= grid.GetLength(1) || Mathf.Abs(x) == Mathf.Abs(y)) {
                     continue;
                 }
                 Cell canditateCell = grid[cellX, cellY];
@@ -50,8 +47,8 @@ public class Cell
 [System.Flags]
 public enum Wall
 {
-    LEFT    = 1,
-    UP      = 2,
-    RIGHT   = 4,
-    DOWN    = 8
+    LEFT = 1,
+    UP = 2,
+    RIGHT = 4,
+    DOWN = 8
 }

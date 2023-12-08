@@ -20,8 +20,7 @@ public class MazeGeneration : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
+        if (Input.GetKeyDown(KeyCode.Space)) {
             seed = Random.Range(0, int.MaxValue);
             Random.InitState(seed);
             width = Random.Range(10, 100);
@@ -35,8 +34,7 @@ public class MazeGeneration : MonoBehaviour
     private void DestroyMazeObjects()
     {
         allCellObjects.Clear();
-        foreach (Transform t in transform)
-        {
+        foreach (Transform t in transform) {
             Destroy(t.gameObject);
         }
     }
@@ -45,10 +43,8 @@ public class MazeGeneration : MonoBehaviour
     {
         grid = new Cell[width, height];
         grid.Initialize();
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 grid[x, y] = new Cell();
                 grid[x, y].gridPosition = new Vector2Int(x, y);
                 grid[x, y].walls = Wall.DOWN | Wall.LEFT | Wall.RIGHT | Wall.UP;
@@ -59,17 +55,14 @@ public class MazeGeneration : MonoBehaviour
         List<Cell> visitedCells = new List<Cell>();
         cellStack.Push(grid[0, 0]);
         Cell currentCell;
-        while (cellStack.Count > 0)
-        {
+        while (cellStack.Count > 0) {
             currentCell = cellStack.Pop();
             List<Cell> neighbours = GetUnvisitedNeighbours(currentCell, visitedCells, cellStack);
-            if (neighbours.Count > 1)
-            {
+            if (neighbours.Count > 1) {
                 cellStack.Push(currentCell);
             }
 
-            if (neighbours.Count != 0)
-            {
+            if (neighbours.Count != 0) {
                 Cell randomUnvisitedNeighbour = neighbours[Random.Range(0, neighbours.Count)];
                 RemoveWallBetweenCells(currentCell, randomUnvisitedNeighbour);
                 visitedCells.Add(randomUnvisitedNeighbour);
@@ -81,19 +74,16 @@ public class MazeGeneration : MonoBehaviour
         int totalWallsInMaze = GetWallCount(grid);
         int totalPossibleWallsInmaze = 4 * width * height;
         float wallPercentage = totalWallsInMaze / (float)totalPossibleWallsInmaze;
-        
-        while (wallPercentage > desiredWallpercentage)
-        {
+
+        while (wallPercentage > desiredWallpercentage) {
             int randomX = Random.Range(0, width);
             int randomY = Random.Range(0, height);
             Cell randomCell = grid[randomX, randomY];
             List<Cell> neighbours = randomCell.GetNeighbours(grid);
-            if (neighbours.Count > 0)
-            {
+            if (neighbours.Count > 0) {
                 Cell randomNeighbour = neighbours[Random.Range(0, neighbours.Count)];
                 bool wallsRemoved = RemoveWallBetweenCells(randomCell, randomNeighbour);
-                if (wallsRemoved)
-                {
+                if (wallsRemoved) {
                     totalWallsInMaze -= 2;
                     wallPercentage = totalWallsInMaze / (float)totalPossibleWallsInmaze;
                 }
@@ -101,10 +91,8 @@ public class MazeGeneration : MonoBehaviour
         }
 
         //Generate Objects
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 CellPrefab cellObject = Instantiate(cellPrefab, new Vector3(x * scaleFactor, 0, y * scaleFactor), Quaternion.identity, transform);
                 cellObject.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
                 cellObject.SpawnWalls(grid[x, y]);
@@ -115,10 +103,8 @@ public class MazeGeneration : MonoBehaviour
     private int GetWallCount(Cell[,] grid)
     {
         int walls = 0;
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 Cell cell = grid[x, y];
                 walls += cell.GetNumWalls();
             }
@@ -138,19 +124,15 @@ public class MazeGeneration : MonoBehaviour
     private List<Cell> GetUnvisitedNeighbours(Cell cell, List<Cell> visitedCells, Stack<Cell> cellstack)
     {
         List<Cell> result = new List<Cell>();
-        for (int x = -1; x < 2; x++)
-        {
-            for (int y = -1; y < 2; y++)
-            {
+        for (int x = -1; x < 2; x++) {
+            for (int y = -1; y < 2; y++) {
                 int cellX = cell.gridPosition.x + x;
                 int cellY = cell.gridPosition.y + y;
-                if (cellX < 0 || cellX >= width || cellY < 0 || cellY >= height || Mathf.Abs(x) == Mathf.Abs(y))
-                {
+                if (cellX < 0 || cellX >= width || cellY < 0 || cellY >= height || Mathf.Abs(x) == Mathf.Abs(y)) {
                     continue;
                 }
                 Cell canditateCell = grid[cellX, cellY];
-                if (!visitedCells.Contains(canditateCell) && !cellstack.Contains(canditateCell))
-                {
+                if (!visitedCells.Contains(canditateCell) && !cellstack.Contains(canditateCell)) {
                     result.Add(canditateCell);
                 }
             }
@@ -168,13 +150,11 @@ public class MazeGeneration : MonoBehaviour
     {
         int numWallCellOne = cellOne.GetNumWalls();
         Vector2Int dirVector = cellTwo.gridPosition - cellOne.gridPosition;
-        if (dirVector.x != 0)
-        {
+        if (dirVector.x != 0) {
             cellOne.RemoveWall(dirVector.x > 0 ? Wall.RIGHT : Wall.LEFT);
             cellTwo.RemoveWall(dirVector.x > 0 ? Wall.LEFT : Wall.RIGHT);
         }
-        if (dirVector.y != 0)
-        {
+        if (dirVector.y != 0) {
             cellOne.RemoveWall(dirVector.y > 0 ? Wall.UP : Wall.DOWN);
             cellTwo.RemoveWall(dirVector.y > 0 ? Wall.DOWN : Wall.UP);
         }

@@ -35,11 +35,9 @@ public class Agent : MonoBehaviour
 
     private void DrawPath()
     {
-        if (path != null && path.Count > 0)
-        {
+        if (path != null && path.Count > 0) {
             line.positionCount = path.Count;
-            for (int i = 0; i < path.Count; i++)
-            {
+            for (int i = 0; i < path.Count; i++) {
                 line.SetPosition(i, Vector2IntToVector3(path[i], 0.1f));
             }
         }
@@ -49,8 +47,7 @@ public class Agent : MonoBehaviour
     //Move to clicked position
     public void Update()
     {
-        if (Input.GetMouseButtonDown(moveButton))
-        {
+        if (Input.GetMouseButtonDown(moveButton)) {
             Debug.Log("Click");
             Ray r = Camera.main.ScreenPointToRay(new Vector3(Input.mousePosition.x, Input.mousePosition.y, -10));
 
@@ -60,15 +57,12 @@ public class Agent : MonoBehaviour
             FindPathToTarget(Vector3ToVector2Int(transform.position), targetPos, maze.grid);
         }
 
-        if (path != null && path.Count > 0)
-        {
-            if (transform.position != Vector2IntToVector3(path[0]))
-            {
+        if (path != null && path.Count > 0) {
+            if (transform.position != Vector2IntToVector3(path[0])) {
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(Vector2IntToVector3(path[0]) - transform.position), 360f * Time.deltaTime);
                 transform.position = Vector3.MoveTowards(transform.position, Vector2IntToVector3(path[0]), moveSpeed * Time.deltaTime);
             }
-            else
-            {
+            else {
                 path.RemoveAt(0);
                 DrawPath();
             }
@@ -96,10 +90,8 @@ public class Agent : MonoBehaviour
     }
     private void OnDrawGizmos()
     {
-        if (path != null && path.Count > 0)
-        {
-            for (int i = 0; i < path.Count - 1; i++)
-            {
+        if (path != null && path.Count > 0) {
+            for (int i = 0; i < path.Count - 1; i++) {
                 Gizmos.color = renderer.material.color;
                 Gizmos.DrawLine(Vector2IntToVector3(path[i], 0.5f), Vector2IntToVector3(path[i + 1], 0.5f));
             }
